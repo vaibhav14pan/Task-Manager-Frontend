@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles';
 import { useSelector, useDispatch } from 'react-redux';
-import { callFetchTasks, callAddTasks, callDeleteTasks } from './TasksAPI';
+import { fetchTasks, addNewTask, deleteExistingTask } from '../features/taskSlice';
 import { useAuth } from './AuthAPI';
 
 const Home = () => {
@@ -11,28 +11,25 @@ const Home = () => {
   const [buttonText, setButtonText] = useState('Add Task');
   const { token } = useAuth();
   const dispatch = useDispatch();
-  const tasks = useSelector((state) => state.tasks.tasks);
-
+  const { tasks, loading, error } = useSelector((state) => state.tasks); 
 
   useEffect(() => {
     if (token) {
-      callFetchTasks(dispatch, token);
+      dispatch(fetchTasks(token));
     }
   }, [dispatch, token]);
 
-
   const handleAddTask = () => {
     if (inputText.trim()) {
-      callAddTasks(dispatch, token, inputText);
+      dispatch(addNewTask({ token, content: inputText }));
       setInputText('');
       setButtonText('Add Task');
     }
   };
 
   const handleDeleteTask = (id) => {
-    callDeleteTasks(dispatch, token, id);
+    dispatch(deleteExistingTask({ token, id }));
   };
-
 
   const handleEditTask = (id) => {
     const taskToEdit = tasks.find((task) => task._id === id);
@@ -42,6 +39,16 @@ const Home = () => {
       handleDeleteTask(id);
     }
   };
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Error', error);
+    }
+  }, [error]);
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
 
   return (
     <View style={styles.container}>
